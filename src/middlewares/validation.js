@@ -1,11 +1,13 @@
 const Joi = require('joi');
 
-const taskSchema = Joi.object({
-    title: Joi.string().required(),
+const taskValidation = (data) => {
+  const schema = Joi.object({
+    title: Joi.string().min(3).required(),
     description: Joi.string().optional(),
-    completed: Joi.boolean().optional()
-});
+    status: Joi.string().valid('pending', 'in-progress', 'completed').optional(), // Pastikan status diizinkan
+  });
 
-const taskValidation = (data) => taskSchema.validate(data);
+  return schema.validate(data);
+};
 
 module.exports = { taskValidation };

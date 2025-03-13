@@ -1,69 +1,70 @@
-const Task = require('../models/Tasks')
-const logger = require('../utils/logger');
-const { taskValidation } = require('../middlewares/validation');
-const ExpressError = require('../middlewares/errorHandler');
+const Task = require('../models/Tasks'); // Import model Task
+const logger = require('../utils/logger'); // Import utility logger
+const { taskValidation } = require('../middlewares/validation'); // Import validasi task
+const ExpressError = require('../middlewares/errorHandler'); // Import error handler
 
-exports.getTasks = async (req, res, next) => {
+module.exports.getTasks = async (req, res, next) => {
   try {
-    const tasks = await Task.find();
-    logger.info('Fetched tasks successfully');
-    res.json(tasks);
+    const tasks = await Task.find().lean(); // Menggunakan lean() untuk performa yang lebih baik
+    logger.info('Berhasil mengambil data tasks');
+    res.json(tasks); // Kirim response berupa data tasks
   } catch (error) {
-    logger.error(`Failed to fetch tasks: ${error.message}`);
-    next(new ExpressError('Failed to fetch tasks', 500));
+    logger.error(`Gagal mengambil data tasks: ${error.message}`);
+    next(new ExpressError('Gagal mengambil data tasks', 500)); // Tangani error
   }
 };
 
-exports.createTask = async (req, res, next) => {
+module.exports.createTask = async (req, res, next) => {
   try {
-    const { error } = taskValidation(req.body);
+    const { error } = taskValidation(req.body); // Validasi data input
     if (error) {
-      logger.error(`Validation error: ${error.details[0].message}`);
-      return next(new ExpressError(error.details[0].message, 400));
+      logger.error(`Error validasi: ${error.details[0].message}`);
+      return next(new ExpressError(error.details[0].message, 400)); // Jika validasi gagal, kirim error
     }
     
-    const task = new Task(req.body);
-    await task.save();
-    logger.info('Task created successfully');
-    res.status(201).json(task);
+    const task = await Task.create(req.body); // Membuat task baru (lebih singkat daripada new Task() + save())
+    logger.info('Task berhasil dibuat');
+    res.status(201).json(task); // Kirim response task yang baru dibuat
   } catch (error) {
-    logger.error(`Failed to create task: ${error.message}`);
-    next(new ExpressError('Failed to create task', 500));
+    logger.error(`Gagal membuat task: ${error.message}`);
+    next(new ExpressError('Gagal membuat task', 500)); // Tangani error
   }
 };
 
-exports.updateTask = async (req, res, next) => {
+module.exports.updateTask = async (req, res, next) => {
   try {
-    const { error } = taskValidation(req.body);
+    const { error } = taskValidation(req.body); // Validasi data input
     if (error) {
-      logger.error(`Validation error: ${error.details[0].message}`);
-      return next(new ExpressError(error.details[0].message, 400));
+      logger.error(`Error validasi: ${error.details[0].message}`);
+      return next(new ExpressError(error.details[0].message, 400)); // Jika validasi gagal, kirim error
     }
     
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true }).lean();
     if (!task) {
-      logger.error('Task not found');
-      return next(new ExpressError('Task not found', 404));
+      logger.error('Task tidak ditemukan');
+      return next(new ExpressError('Task tidak ditemukan', 404)); // Jika task tidak ditemukan, kirim error
     }
-    logger.info('Task updated successfully');
-    res.json(task);
+    
+    logger.info('Task berhasil diperbarui');
+    res.json(task); // Kirim response task yang telah diperbarui
   } catch (error) {
-    logger.error(`Failed to update task: ${error.message}`);
-    next(new ExpressError('Failed to update task', 500));
+    logger.error(`Gagal memperbarui task: ${error.message}`);
+    next(new ExpressError('Gagal memperbarui task', 500)); // Tangani error
   }
 };
 
-exports.deleteTask = async (req, res, next) => {
+module.exports.deleteTask = async (req, res, next) => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
+    const task = await Task.findByIdAndDelete(req.params.id); // Cari dan hapus task berdasarkan ID
     if (!task) {
-      logger.error('Task not found');
-      return next(new ExpressError('Task not found', 404));
+      logger.error('Task tidak ditemukan');
+      return next(new ExpressError('Task tidak ditemukan', 404)); // Jika task tidak ditemukan, kirim error
     }
-    logger.info('Task deleted successfully');
-    res.json({ message: 'Task deleted successfully' });
+    
+    logger.info('Task berhasil dihapus');
+    res.json({ message: 'Task berhasil dihapus' }); // Kirim response sukses
   } catch (error) {
-    logger.error(`Failed to delete task: ${error.message}`);
-    next(new ExpressError('Failed to delete task', 500));
+    logger.error(`Gagal menghapus task: ${error.message}`);
+    next(new ExpressError('Gagal menghapus task', 500)); // Tangani error
   }
 };
