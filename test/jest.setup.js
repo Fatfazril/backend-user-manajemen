@@ -1,0 +1,1 @@
+require('dotenv').config({ path: '.env.test' }); // Load environment variable dari file .env.test
